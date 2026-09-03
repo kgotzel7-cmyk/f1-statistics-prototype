@@ -3531,6 +3531,9 @@ html>body{padding:0}</style>
   let touchRoundPinned = false;
   let touchPointerActive = false;
   let selectedTouchRound = null;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchScrubbing = false;
 
   const seasonSelect = root.querySelector('#f1-season');
   const circuitSelect = root.querySelector('#f1-circuit');
@@ -3958,9 +3961,18 @@ html>body{padding:0}</style>
 
   function clearChartSelection() {
     touchRoundPinned = false;
+    touchScrubbing = false;
     selectedTouchRound = null;
     chartOpenRound.hidden = true;
     hideHover();
+  }
+
+  function selectTouchRound(index) {
+    touchRoundPinned = true;
+    selectedTouchRound = index;
+    showRound(index, true);
+    chartOpenRound.textContent = `Open ${model.season.rounds[index][0]} race weekend`;
+    chartOpenRound.hidden = false;
   }
 
   function showRound(index, touchSelection = false) {
@@ -4000,7 +4012,7 @@ html>body{padding:0}</style>
     if (showB) { lineB.style.display=''; dotB.style.display=''; lineB.setAttribute('d',pathFor(b,min,max,invert)); const endB=endpoint(b,min,max,invert); dotB.setAttribute('cx',endB.x); dotB.setAttribute('cy',endB.y); legend.style.display='flex'; }
     else { lineB.style.display='none'; dotB.style.display='none'; legend.style.display='none'; }
     const finalGap = model.pointsA.at(-1) - model.pointsB.at(-1);
-    const interactionHint = window.matchMedia('(pointer: coarse)').matches ? 'Tap the chart to inspect a round.' : 'Click a round to open its race weekend.';
+    const interactionHint = window.matchMedia('(pointer: coarse)').matches ? 'Tap or drag across the chart to inspect a round.' : 'Click a round to open its race weekend.';
     summary.textContent = mode === 'gap' ? `Signed gap: ${model.a[1]} points minus ${model.b[1]} points. ${interactionHint}` : mode === 'position' ? `Championship rank after each completed round. Rank 1 is shown highest. ${interactionHint}` : `Totals include sprint points where represented. Final prototype gap: ${signed(finalGap)} points. ${interactionHint}`;
     svgTitle.textContent = `${mode === 'position' ? 'Championship position' : mode === 'gap' ? 'Signed championship gap' : 'Cumulative championship points'} after each ${state.season} round`;
     svgDesc.textContent = `${model.a[0]} and ${model.b[0]} comparison across ${activeA.length} rounds.`;
@@ -4039,10 +4051,24 @@ html>body{padding:0}</style>
   root.querySelectorAll('.f1-chart-tab').forEach(button => button.addEventListener('click', () => { root.querySelectorAll('.f1-chart-tab').forEach(peer => peer.setAttribute('aria-pressed', String(peer === button))); render(button.dataset.mode); }));
   chartHit.addEventListener('pointerdown', event => {
     touchPointerActive = event.pointerType === 'touch';
+    if (touchPointerActive) {
+      touchStartX = event.clientX;
+      touchStartY = event.clientY;
+      touchScrubbing = false;
+    }
   });
   chartHit.addEventListener('pointercancel', () => { touchPointerActive = false; });
   chartHit.addEventListener('pointermove', event => {
-    if (event.pointerType === 'touch') return;
+    if (event.pointerType === 'touch') {
+      const deltaX = Math.abs(event.clientX - touchStartX);
+      const deltaY = Math.abs(event.clientY - touchStartY);
+      if (!touchScrubbing) {
+        if (Math.max(deltaX, deltaY) < 6 || deltaX <= deltaY) return;
+        touchScrubbing = true;
+      }
+      selectTouchRound(roundFromPointer(event));
+      return;
+    }
     showRound(roundFromPointer(event));
   });
   chartHit.addEventListener('pointerleave', event => {
@@ -4054,11 +4080,7 @@ html>body{padding:0}</style>
     const isTouch = event.pointerType === 'touch' || touchPointerActive;
     touchPointerActive = false;
     if (isTouch) {
-      touchRoundPinned = true;
-      selectedTouchRound = index;
-      showRound(index, true);
-      chartOpenRound.textContent = `Open ${model.season.rounds[index][0]} race weekend`;
-      chartOpenRound.hidden = false;
+      selectTouchRound(index);
       return;
     }
     root.dispatchEvent(new CustomEvent('f1:open-comparison-round', { detail: { season: state.season, roundIndex: index }, bubbles: true }));
