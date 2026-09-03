@@ -1537,6 +1537,21 @@ html>body{padding:0}</style>
 
   #f1-compare-wireframe .f1-chart-tooltip.is-visible { display: block; }
 
+  #f1-compare-wireframe .f1-chart-open-round {
+    width: 100%;
+    min-height: 40px;
+    margin-top: 7px;
+    padding: 0 12px;
+    border: 1px solid var(--f1-line);
+    border-radius: 10px;
+    background: var(--f1-soft);
+    color: var(--f1-text);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  #f1-compare-wireframe .f1-chart-open-round[hidden] { display: none; }
+
   #f1-compare-wireframe .f1-tooltip-title {
     margin-bottom: 6px;
     font-size: 12px;
@@ -3072,6 +3087,7 @@ html>body{padding:0}</style>
 </svg>
 <div class="f1-chart-tooltip" id="f1-chart-tooltip" role="tooltip"></div>
 </div>
+<button class="f1-chart-open-round" hidden id="f1-chart-open-round" type="button">Open selected race weekend</button>
 <p aria-live="polite" class="f1-chart-summary" id="f1-chart-summary">Totals include sprint points. Norris took the championship lead in round 20 and finished 13 points ahead.</p>
 </div>
 </section>
@@ -3512,6 +3528,9 @@ html>body{padding:0}</style>
   let activeMax = 1;
   let activeInvert = false;
   let activeShowsB = true;
+  let touchRoundPinned = false;
+  let touchPointerActive = false;
+  let selectedTouchRound = null;
 
   const seasonSelect = root.querySelector('#f1-season');
   const circuitSelect = root.querySelector('#f1-circuit');
@@ -3536,6 +3555,7 @@ html>body{padding:0}</style>
   const hoverB = root.querySelector('#f1-hover-b');
   const chartHit = root.querySelector('#f1-chart-hit');
   const chartTooltip = root.querySelector('#f1-chart-tooltip');
+  const chartOpenRound = root.querySelector('#f1-chart-open-round');
   const seasonContextLink = root.querySelector('#f1-season-context-link');
 
   const left = 34, right = 348, top = 16, bottom = 148;
@@ -3936,7 +3956,14 @@ html>body{padding:0}</style>
   const signed = value => value > 0 ? `+${value}` : value < 0 ? `−${Math.abs(value)}` : '0';
   function hideHover() { hoverLayer.style.display = 'none'; chartTooltip.classList.remove('is-visible'); }
 
-  function showRound(index) {
+  function clearChartSelection() {
+    touchRoundPinned = false;
+    selectedTouchRound = null;
+    chartOpenRound.hidden = true;
+    hideHover();
+  }
+
+  function showRound(index, touchSelection = false) {
     const n = activeA.length;
     const x = n === 1 ? (left + right) / 2 : left + (right - left) * index / (n - 1);
     const valueA = activeA[index], valueB = activeShowsB ? activeB[index] : null;
@@ -3948,7 +3975,7 @@ html>body{padding:0}</style>
     if (activeMode === 'position') rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>P${valueA}</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>P${valueB}</strong></div>`;
     else if (activeMode === 'gap') rows = `<div class="f1-tooltip-row"><span>${model.a[1]} − ${model.b[1]}</span><strong>${signed(valueA)} pts</strong></div><div class="f1-tooltip-row"><span>Leader</span><strong>${valueA === 0 ? 'Tied' : `${valueA > 0 ? model.a[0] : model.b[0]} by ${Math.abs(valueA)}`}</strong></div>`;
     else rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>${valueA} pts</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>${valueB} pts</strong></div><div class="f1-tooltip-row"><span>Gap</span><strong>${signed(valueA-valueB)} pts</strong></div>`;
-    chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${model.season.rounds[index][0]}</div>${rows}<div class="f1-tooltip-row"><span>Click</span><strong>Open race</strong></div>`;
+    chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${model.season.rounds[index][0]}</div>${rows}${touchSelection ? '' : '<div class="f1-tooltip-row"><span>Click</span><strong>Open race</strong></div>'}`;
     const box = chart.getBoundingClientRect(); const pixelX = x / 360 * box.width;
     chartTooltip.style.left = `${pixelX}px`; chartTooltip.style.top = '44px'; chartTooltip.style.transform = index < 3 ? 'translateX(0)' : index > n - 4 ? 'translateX(-100%)' : 'translateX(-50%)'; chartTooltip.classList.add('is-visible');
   }
@@ -3966,14 +3993,15 @@ html>body{padding:0}</style>
     if (mode === 'position') { a = model.positionA; b = model.positionB; min = 1; max = Math.max(10, ...a, ...b); ticks = [1, Math.ceil(max/2), max]; invert = true; }
     else if (mode === 'gap') { a = model.gap; b = []; const abs = Math.max(10, ...a.map(Math.abs)); max = Math.ceil(abs/10)*10; min = -max; ticks = [min,0,max]; showB = false; }
     else ticks = [0, Math.round(max/2), max];
-    activeMode = mode; activeA = a; activeB = b; activeMin = min; activeMax = max; activeInvert = invert; activeShowsB = showB; hideHover();
+    activeMode = mode; activeA = a; activeB = b; activeMin = min; activeMax = max; activeInvert = invert; activeShowsB = showB; clearChartSelection();
     renderGrid(min,max,ticks,invert,mode === 'gap');
     lineA.setAttribute('d', pathFor(a,min,max,invert));
     const endA = endpoint(a,min,max,invert); dotA.setAttribute('cx',endA.x); dotA.setAttribute('cy',endA.y);
     if (showB) { lineB.style.display=''; dotB.style.display=''; lineB.setAttribute('d',pathFor(b,min,max,invert)); const endB=endpoint(b,min,max,invert); dotB.setAttribute('cx',endB.x); dotB.setAttribute('cy',endB.y); legend.style.display='flex'; }
     else { lineB.style.display='none'; dotB.style.display='none'; legend.style.display='none'; }
     const finalGap = model.pointsA.at(-1) - model.pointsB.at(-1);
-    summary.textContent = mode === 'gap' ? `Signed gap: ${model.a[1]} points minus ${model.b[1]} points. Click a round to open its race weekend.` : mode === 'position' ? `Championship rank after each completed round. Rank 1 is shown highest. Click a round to open its race weekend.` : `Totals include sprint points where represented. Final prototype gap: ${signed(finalGap)} points. Click a round to open its race weekend.`;
+    const interactionHint = window.matchMedia('(pointer: coarse)').matches ? 'Tap the chart to inspect a round.' : 'Click a round to open its race weekend.';
+    summary.textContent = mode === 'gap' ? `Signed gap: ${model.a[1]} points minus ${model.b[1]} points. ${interactionHint}` : mode === 'position' ? `Championship rank after each completed round. Rank 1 is shown highest. ${interactionHint}` : `Totals include sprint points where represented. Final prototype gap: ${signed(finalGap)} points. ${interactionHint}`;
     svgTitle.textContent = `${mode === 'position' ? 'Championship position' : mode === 'gap' ? 'Signed championship gap' : 'Cumulative championship points'} after each ${state.season} round`;
     svgDesc.textContent = `${model.a[0]} and ${model.b[0]} comparison across ${activeA.length} rounds.`;
     chart.setAttribute('aria-label', summary.textContent);
@@ -4009,11 +4037,35 @@ html>body{padding:0}</style>
   root.querySelector('#f1-swap').addEventListener('click', () => { const temp = state.driverA; state.driverA = state.driverB; state.driverB = temp; populateSelectors(); refreshComparison(); });
   viewAllRounds.addEventListener('click', () => { roundsExpanded = !roundsExpanded; openRound = null; renderRoundList(); });
   root.querySelectorAll('.f1-chart-tab').forEach(button => button.addEventListener('click', () => { root.querySelectorAll('.f1-chart-tab').forEach(peer => peer.setAttribute('aria-pressed', String(peer === button))); render(button.dataset.mode); }));
-  chartHit.addEventListener('pointermove', event => showRound(roundFromPointer(event)));
-  chartHit.addEventListener('pointerleave', hideHover);
+  chartHit.addEventListener('pointerdown', event => {
+    touchPointerActive = event.pointerType === 'touch';
+  });
+  chartHit.addEventListener('pointercancel', () => { touchPointerActive = false; });
+  chartHit.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch') return;
+    showRound(roundFromPointer(event));
+  });
+  chartHit.addEventListener('pointerleave', event => {
+    if (event.pointerType === 'touch' && touchRoundPinned) return;
+    hideHover();
+  });
   chartHit.addEventListener('click', event => {
     const index = roundFromPointer(event);
+    const isTouch = event.pointerType === 'touch' || touchPointerActive;
+    touchPointerActive = false;
+    if (isTouch) {
+      touchRoundPinned = true;
+      selectedTouchRound = index;
+      showRound(index, true);
+      chartOpenRound.textContent = `Open ${model.season.rounds[index][0]} race weekend`;
+      chartOpenRound.hidden = false;
+      return;
+    }
     root.dispatchEvent(new CustomEvent('f1:open-comparison-round', { detail: { season: state.season, roundIndex: index }, bubbles: true }));
+  });
+  chartOpenRound.addEventListener('click', () => {
+    if (selectedTouchRound === null) return;
+    root.dispatchEvent(new CustomEvent('f1:open-comparison-round', { detail: { season: state.season, roundIndex: selectedTouchRound }, bubbles: true }));
   });
   seasonContextLink.addEventListener('click', () => root.dispatchEvent(new CustomEvent('f1:open-season-standings', { detail: { season: state.season }, bubbles: true })));
   root.addEventListener('click', event => {
