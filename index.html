@@ -3559,6 +3559,7 @@ html>body{padding:0}</style>
   const chartHit = root.querySelector('#f1-chart-hit');
   const chartTooltip = root.querySelector('#f1-chart-tooltip');
   const chartOpenRound = root.querySelector('#f1-chart-open-round');
+  const chartShell = root.querySelector('.f1-chart-shell');
   const seasonContextLink = root.querySelector('#f1-season-context-link');
 
   const left = 34, right = 348, top = 16, bottom = 148;
@@ -4088,6 +4089,11 @@ html>body{padding:0}</style>
   chartOpenRound.addEventListener('click', () => {
     if (selectedTouchRound === null) return;
     root.dispatchEvent(new CustomEvent('f1:open-comparison-round', { detail: { season: state.season, roundIndex: selectedTouchRound }, bubbles: true }));
+  });
+  chartShell.addEventListener('click', event => {
+    if (!touchRoundPinned) return;
+    if (event.target.closest('.f1-chart-wrap, .f1-chart-open-round')) return;
+    clearChartSelection();
   });
   seasonContextLink.addEventListener('click', () => root.dispatchEvent(new CustomEvent('f1:open-season-standings', { detail: { season: state.season }, bubbles: true })));
   root.addEventListener('click', event => {
