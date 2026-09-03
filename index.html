@@ -2955,7 +2955,7 @@ html>body{padding:0}</style>
 </div>
 <p class="f1-tagline" id="f1-comparison-context">Teammates · McLaren</p><div class="f1-data-banner" id="f1-comparison-data-note">Prototype comparison data. Navigation and metric structure are being tested before provider integration.</div>
 </section>
-<section aria-labelledby="f1-primary-title" class="f1-section">
+<section aria-labelledby="f1-primary-title" class="f1-section" id="f1-primary-section">
 <p class="f1-kicker" id="f1-primary-kicker">Season result</p>
 <h2 class="f1-section-title" id="f1-primary-title">Championship outcome</h2>
 <div class="f1-pair-card">
@@ -2976,7 +2976,7 @@ html>body{padding:0}</style>
 </div>
 </div>
 </section>
-<section aria-labelledby="f1-h2h-title" class="f1-section">
+<section aria-labelledby="f1-h2h-title" class="f1-section" id="f1-h2h-section">
 <p class="f1-kicker">Direct comparison</p>
 <h2 class="f1-section-title" id="f1-h2h-title">Head-to-head</h2>
 <div class="f1-pair-card">
@@ -2993,7 +2993,7 @@ html>body{padding:0}</style>
 </div>
 <p class="f1-tagline" id="f1-h2h-note">Excluded events and denominators remain visible.</p>
 </section>
-<section aria-labelledby="f1-outcomes-title" class="f1-section">
+<section aria-labelledby="f1-outcomes-title" class="f1-section" id="f1-outcomes-section">
 <div class="f1-section-head">
 <div>
 <p class="f1-kicker" id="f1-outcomes-kicker">Supporting context</p>
@@ -3560,6 +3560,10 @@ html>body{padding:0}</style>
   const chartTooltip = root.querySelector('#f1-chart-tooltip');
   const chartOpenRound = root.querySelector('#f1-chart-open-round');
   const chartShell = root.querySelector('.f1-chart-shell');
+  const primarySection = root.querySelector('#f1-primary-section');
+  const h2hSection = root.querySelector('#f1-h2h-section');
+  const outcomesSection = root.querySelector('#f1-outcomes-section');
+  const roundDetailsSection = root.querySelector('#f1-round-details-section');
   const seasonContextLink = root.querySelector('#f1-season-context-link');
 
   const left = 34, right = 348, top = 16, bottom = 148;
@@ -3758,12 +3762,14 @@ html>body{padding:0}</style>
     root.querySelector('#f1-comparison-context').textContent = teammates ? `Teammates · ${a[2]}${context}` : `${a[2]} vs ${b[2]}${context}`;
 
     const dataNote = root.querySelector('#f1-comparison-data-note');
-    if (circuitMode) {
+    if (!model.detailed) {
+      dataNote.textContent = circuitMode
+        ? `Circuit and round-level comparison data for this driver pair is not available in the frozen prototype. No generated values are shown.`
+        : `Only the stored season outcome is available for this driver pair in the frozen prototype. Round-by-round points, positions, H2H and race details are hidden because they are not provider-backed.`;
+    } else if (circuitMode) {
       dataNote.textContent = `${model.season.note} Selected-circuit values below are reduced to this one event; season-wide totals are not presented as if they described the circuit.`;
     } else {
-      dataNote.textContent = model.detailed
-        ? model.season.note
-        : `${model.season.note} Generated H2H/round values are explicitly illustrative; do not treat them as race facts.`;
+      dataNote.textContent = model.season.note;
     }
     root.querySelector('#f1-outcome-codes').textContent = `${a[1]} · ${b[1]}`;
     root.querySelector('#f1-sprint-context').textContent = `Separate from Grand Prix metrics · ${a[1]} / ${b[1]}`;
@@ -3777,6 +3783,34 @@ html>body{padding:0}</style>
     const sprintStrip = root.querySelector('#f1-sprint-strip');
     const circuitHistory = root.querySelector('#f1-circuit-history-section');
     const developmentSection = root.querySelector('#f1-season-development-section');
+
+    primarySection.hidden = false;
+    h2hSection.hidden = false;
+    outcomesSection.hidden = false;
+    roundDetailsSection.hidden = false;
+
+    if (!model.detailed) {
+      primarySection.hidden = circuitMode;
+      h2hSection.hidden = true;
+      outcomesSection.hidden = true;
+      sprintStrip.hidden = true;
+      circuitHistory.hidden = true;
+      developmentSection.hidden = true;
+      roundDetailsSection.hidden = true;
+      openRound = null;
+      roundsExpanded = false;
+      clearChartSelection();
+
+      if (!circuitMode) {
+        primaryKicker.textContent = 'Season result';
+        primaryTitle.textContent = 'Championship outcome';
+        primaryPointsLabel.textContent = 'Points';
+        primaryPositionLabel.textContent = 'Final position';
+        setMetric('a','points',a[3], a[3] > b[3]); setMetric('b','points',b[3], b[3] > a[3]);
+        setMetric('a','position',ordinal(a[4]), a[4] < b[4]); setMetric('b','position',ordinal(b[4]), b[4] < a[4]);
+      }
+      return;
+    }
 
     if (circuitMode) {
       const race = model.season.rounds[circuitIndex];
