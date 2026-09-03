@@ -2497,6 +2497,8 @@ html>body{padding:0}</style>
     min-height: 62px;
     padding: 9px 10px;
     border-bottom: 1px solid var(--f1-line);
+    color: inherit;
+    font: inherit;
   }
 
   #f1-compare-wireframe .f1-session-row:last-child,
@@ -4522,14 +4524,14 @@ html>body{padding:0}</style>
       ['Lando Norris','McLaren'],
       ['Charles Leclerc','Ferrari']
     ];
-    return `<div class="f1-data-banner">Illustrative rows to test result → driver/team navigation. They are not this event's actual ${type} classification.</div><div class="f1-classification-list">${rows.map((row, index) => `
-      <div class="f1-classification-row">
+    return `<div class="f1-data-banner">Illustrative rows to test result → driver navigation. They are not this event's actual ${type} classification.</div><div class="f1-classification-list">${rows.map((row, index) => `
+      <button class="f1-classification-row" type="button" data-standing-driver="${row[0]}" aria-label="Open ${row[0]} profile">
         <span class="f1-classification-grid">
           <span class="f1-classification-rank">${index + 1}</span>
-          <span class="f1-classification-driver-wrap"><button class="f1-classification-driver" type="button" data-standing-driver="${row[0]}">${row[0]}</button><button class="f1-classification-team" type="button" data-team-link="${row[1]}">${row[1]}</button></span>
+          <span class="f1-classification-driver-wrap"><span class="f1-classification-driver">${row[0]}</span><span class="f1-classification-team">${row[1]}</span></span>
           <span class="f1-classification-pos">Example</span>
         </span>
-      </div>`).join('')}</div>`;
+      </button>`).join('')}</div>`;
   }
 
   function impactMarkup(completed) {
