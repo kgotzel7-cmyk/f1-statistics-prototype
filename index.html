@@ -4446,6 +4446,13 @@ html>body{padding:0}</style>
   let activeProfileSeason = '2026';
   let activeProfileName = null;
   let standingsMode = 'drivers';
+  let searchTabState = {
+    screen: 'search',
+    stack: [],
+    scrollTop: 0,
+    profileName: null,
+    profileSeason: null
+  };
   const favouriteDrivers = new Set(['Kimi Antonelli']);
   const favouriteTeams = new Set(['Mercedes']);
   function currentScrollTop() {
@@ -4492,12 +4499,13 @@ html>body{padding:0}</style>
     if (remember && currentScreen !== name) previousScreen = currentScreen;
     currentScreen = name;
     screens.forEach(screen => screen.classList.toggle('is-active', screen.dataset.screen === name));
-    const stackScreen = navigationStack.length ? navigationStack[navigationStack.length - 1].screen : previousScreen;
+    const stackScreens = navigationStack.map(state => state.screen);
+    const stackScreen = stackScreens.length ? stackScreens[stackScreens.length - 1] : previousScreen;
     navItems.forEach(item => {
       const calendarFamily = name === 'calendar' || ((name === 'raceweekend' || name === 'circuit' || ['profile','team'].includes(name)) && ['calendar','raceweekend','circuit'].includes(stackScreen));
       const homeFamily = name === 'home' || (['profile','team'].includes(name) && stackScreen === 'home');
       const followingFamily = name === 'following' || (['profile','team'].includes(name) && stackScreen === 'following');
-      const searchFamily = name === 'search' || (['profile','team','circuit','raceweekend'].includes(name) && stackScreen === 'search');
+      const searchFamily = name === 'search' || (['profile','team','circuit','raceweekend'].includes(name) && stackScreens.includes('search'));
       const active = item.dataset.nav === name || (calendarFamily && item.dataset.nav === 'calendar') || (homeFamily && item.dataset.nav === 'home') || (followingFamily && item.dataset.nav === 'following') || (searchFamily && item.dataset.nav === 'search') || (name === 'profile' && item.dataset.nav === 'compare' && stackScreen === 'compare');
       if (active) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
     });
@@ -4814,6 +4822,50 @@ html>body{padding:0}</style>
     }
   }
 
+  function isInSearchFamily() {
+    return currentScreen === 'search' || navigationStack.some(state => state.screen === 'search');
+  }
+
+  function saveSearchTabState() {
+    if (!isInSearchFamily()) return;
+    searchTabState = {
+      screen: currentScreen,
+      stack: navigationStack.map(state => ({ ...state })),
+      scrollTop: currentScrollTop(),
+      profileName: currentScreen === 'profile' ? activeProfileName : null,
+      profileSeason: currentScreen === 'profile' ? activeProfileSeason : null
+    };
+  }
+
+  function restoreSearchTabState() {
+    const savedStack = searchTabState.stack.map(state => ({ ...state }));
+    if (searchTabState.screen === 'profile' && searchTabState.profileName) {
+      openProfile(searchTabState.profileName, searchTabState.profileSeason);
+    } else {
+      showScreen(searchTabState.screen, false);
+    }
+    navigationStack.length = 0;
+    navigationStack.push(...savedStack);
+    showScreen(searchTabState.screen, false);
+    requestAnimationFrame(() => {
+      const target = root.querySelector(`[data-screen="${searchTabState.screen}"]`);
+      if (target) target.scrollTop = searchTabState.scrollTop || 0;
+    });
+  }
+
+  function resetSearchTab() {
+    searchTabState = {
+      screen: 'search',
+      stack: [],
+      scrollTop: 0,
+      profileName: null,
+      profileSeason: null
+    };
+    resetNavigation('search');
+    if (globalSearch) globalSearch.value = '';
+    renderSearch('');
+  }
+
   if (globalSearch) globalSearch.addEventListener('input', () => renderSearch(globalSearch.value));
 
   root.addEventListener('click', event => {
@@ -4942,16 +4994,20 @@ html>body{padding:0}</style>
     }
     const nav = event.target.closest('[data-nav]');
     if (nav) {
-      navigationStack.length = 0;
-      if (nav.dataset.nav === 'calendar') {
+      const targetTab = nav.dataset.nav;
+      const searchTabIsActive = isInSearchFamily();
+      if (targetTab === 'search') {
+        if (searchTabIsActive) resetSearchTab();
+        else restoreSearchTabState();
+      } else if (targetTab === 'calendar') {
+        if (searchTabIsActive) saveSearchTabState();
+        navigationStack.length = 0;
         resetNavigation('calendar');
         requestAnimationFrame(positionCalendarForSeason);
-      } else if (nav.dataset.nav === 'search') {
-        resetNavigation('search');
-        if (globalSearch) globalSearch.value = '';
-        renderSearch('');
-      } else if (['home','compare','following'].includes(nav.dataset.nav)) {
-        resetNavigation(nav.dataset.nav);
+      } else if (['home','compare','following'].includes(targetTab)) {
+        if (searchTabIsActive) saveSearchTabState();
+        navigationStack.length = 0;
+        resetNavigation(targetTab);
       }
       return;
     }
