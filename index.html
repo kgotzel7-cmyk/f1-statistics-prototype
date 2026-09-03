@@ -3519,7 +3519,7 @@ html>body{padding:0}</style>
     }
   };
 
-  const state = { season: '2025', driverA: 'Lando Norris', driverB: 'Oscar Piastri', circuit: 'All circuits' };
+  const state = { season: '2025', driverA: '', driverB: '', circuit: 'All circuits' };
   let model = null;
   let roundsExpanded = false;
   let openRound = null;
@@ -3691,10 +3691,11 @@ html>body{padding:0}</style>
     const season = seasons[state.season];
     const availableNames = new Set(season.drivers.map(d => d[0]));
     const optionsFor = (selectedName, otherSelectedName) => {
+      const placeholder = selectedName ? '' : '<option value="" selected disabled>Select driver</option>';
       const unavailableSelected = selectedName && !availableNames.has(selectedName)
         ? `<option value="${selectedName}" selected disabled>${selectedName} — not available in ${state.season}</option>`
         : '';
-      return unavailableSelected + season.drivers.map(d => {
+      return placeholder + unavailableSelected + season.drivers.map(d => {
         const isOtherDriver = d[0] === otherSelectedName && d[0] !== selectedName;
         return `<option value="${d[0]}"${isOtherDriver ? ' disabled' : ''}>${d[0]}${isOtherDriver ? ' — already selected' : ''}</option>`;
       }).join('');
