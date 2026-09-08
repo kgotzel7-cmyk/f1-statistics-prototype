@@ -2995,7 +2995,7 @@ html>body{padding:0}</style>
 <div class="f1-value" data-value-b="qualifying">11</div>
 </div>
 </div>
-<p class="f1-tagline" id="f1-h2h-note">Excluded events and denominators remain visible.</p>
+<p class="f1-tagline" id="f1-h2h-note">Comparable means both drivers had a result that could be fairly compared. Four races were excluded: three involving a retirement and one double disqualification.</p>
 </section>
 <section aria-labelledby="f1-outcomes-title" class="f1-section" id="f1-outcomes-section">
 <div class="f1-section-head">
@@ -3867,7 +3867,7 @@ html>body{padding:0}</style>
       setMetric('a','qualifying',model.qualiH2H[0], model.qualiH2H[0] > model.qualiH2H[1]); setMetric('b','qualifying',model.qualiH2H[1], model.qualiH2H[1] > model.qualiH2H[0]);
       root.querySelectorAll('.f1-denom')[0].textContent = `${model.raceH2H[2]} comparable`;
       root.querySelectorAll('.f1-denom')[1].textContent = `${model.qualiH2H[2]} comparable`;
-      root.querySelector('#f1-h2h-note').textContent = model.detailed ? 'Four races excluded from race H2H: 3 retirements and 1 double DSQ.' : 'Prototype denominator shown explicitly. Provider-backed non-classification reasons will replace generated H2H values.';
+      root.querySelector('#f1-h2h-note').textContent = model.detailed ? 'Comparable means both drivers had a result that could be fairly compared. Four races were excluded: three involving a retirement and one double disqualification.' : 'Prototype denominator shown explicitly. Provider-backed non-classification reasons will replace generated H2H values.';
       outcomesKicker.textContent = 'Supporting context';
       outcomesTitle.textContent = 'Outcomes';
       root.querySelector('#f1-outcome-label-wins').textContent = 'Wins';
