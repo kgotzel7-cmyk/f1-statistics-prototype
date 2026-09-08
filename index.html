@@ -4033,7 +4033,9 @@ html>body{padding:0}</style>
     const shortRoundName = model.season.rounds[index][0].replace(/Grand Prix/g, 'GP');
     chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${shortRoundName}</div>${rows}`;
     const box = chart.getBoundingClientRect(); const pixelX = x / 360 * box.width;
-    chartTooltip.style.left = `${pixelX}px`; chartTooltip.style.top = '44px'; chartTooltip.style.transform = index < 3 ? 'translateX(0)' : index > n - 4 ? 'translateX(-100%)' : 'translateX(-50%)'; chartTooltip.classList.add('is-visible');
+    const tooltipWidth = Math.min(230, Math.max(0, box.width - 16));
+    const tooltipCenter = Math.max(8 + tooltipWidth / 2, Math.min(box.width - 8 - tooltipWidth / 2, pixelX));
+    chartTooltip.style.left = `${tooltipCenter}px`; chartTooltip.style.top = '44px'; chartTooltip.style.transform = 'translateX(-50%)'; chartTooltip.classList.add('is-visible');
   }
 
   function roundFromPointer(event) {
