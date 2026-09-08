@@ -4024,11 +4024,12 @@ html>body{padding:0}</style>
     let rows = '';
     if (activeMode === 'position') rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>P${valueA}</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>P${valueB}</strong></div>`;
     else if (activeMode === 'gap') rows = `<div class="f1-tooltip-row"><span>${model.a[1]} − ${model.b[1]}</span><strong>${signed(valueA)} pts</strong></div><div class="f1-tooltip-row"><span>Leader</span><strong>${valueA === 0 ? 'Tied' : `${valueA > 0 ? model.a[0] : model.b[0]} by ${Math.abs(valueA)}`}</strong></div>`;
-    else rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>${valueA} pts</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>${valueB} pts</strong></div><div class="f1-tooltip-row"><span>Gap</span><strong>${signed(valueA-valueB)} pts</strong></div>`;
+    else rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>${valueA} pts</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>${valueB} pts</strong></div><div class="f1-tooltip-row"><span>Gap</span><strong>${valueA === valueB ? 'Tied' : `${valueA > valueB ? model.a[1] : model.b[1]} +${Math.abs(valueA-valueB)} pts`}</strong></div>`;
     selectedTouchRound = index;
     chartOpenRound.textContent = `Open ${model.season.rounds[index][0]} race weekend`;
     chartOpenRound.hidden = false;
-    chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${model.season.rounds[index][0]}</div>${rows}`;
+    const shortRoundName = model.season.rounds[index][0].replace(/Grand Prix/g, 'GP');
+    chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${shortRoundName}</div>${rows}`;
     const box = chart.getBoundingClientRect(); const pixelX = x / 360 * box.width;
     chartTooltip.style.left = `${pixelX}px`; chartTooltip.style.top = '44px'; chartTooltip.style.transform = index < 3 ? 'translateX(0)' : index > n - 4 ? 'translateX(-100%)' : 'translateX(-50%)'; chartTooltip.classList.add('is-visible');
   }
