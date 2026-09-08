@@ -1538,13 +1538,6 @@ html>body{padding:0}</style>
 
   #f1-compare-wireframe .f1-chart-tooltip.is-visible { display: block; }
 
-  #f1-compare-wireframe .f1-chart-action-hint {
-    margin: 8px 2px 0;
-    color: var(--f1-muted);
-    font-size: 11px;
-    line-height: 1.35;
-  }
-
   #f1-compare-wireframe .f1-chart-open-round {
     width: 100%;
     min-height: 40px;
@@ -1552,10 +1545,10 @@ html>body{padding:0}</style>
     padding: 0 12px;
     border: 1px solid var(--f1-line);
     border-radius: 10px;
-    background: var(--f1-strong);
-    color: var(--f1-strong-text);
+    background: var(--f1-soft);
+    color: var(--f1-text);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   #f1-compare-wireframe .f1-chart-open-round[hidden] { display: none; }
@@ -3097,7 +3090,6 @@ html>body{padding:0}</style>
 </svg>
 <div class="f1-chart-tooltip" id="f1-chart-tooltip" role="tooltip"></div>
 </div>
-<p class="f1-chart-action-hint">Tap a chart point to view that round and open its race weekend.</p>
 <button class="f1-chart-open-round" hidden id="f1-chart-open-round" type="button">Open selected race weekend</button>
 <p aria-live="polite" class="f1-chart-summary" id="f1-chart-summary">Totals include sprint points. Norris took the championship lead in round 20 and finished 13 points ahead.</p>
 </div>
@@ -4034,7 +4026,10 @@ html>body{padding:0}</style>
     if (activeMode === 'position') rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>P${valueA}</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>P${valueB}</strong></div>`;
     else if (activeMode === 'gap') rows = `<div class="f1-tooltip-row"><span>${model.a[1]} − ${model.b[1]}</span><strong>${signed(valueA)} pts</strong></div><div class="f1-tooltip-row"><span>Leader</span><strong>${valueA === 0 ? 'Tied' : `${valueA > 0 ? model.a[0] : model.b[0]} by ${Math.abs(valueA)}`}</strong></div>`;
     else { const gap = valueA - valueB; rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>${valueA} pts</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>${valueB} pts</strong></div><div class="f1-tooltip-row"><span>Gap</span><strong>${gap === 0 ? 'Tied' : `${gap > 0 ? model.a[0] : model.b[0]} leads by ${Math.abs(gap)} pts`}</strong></div>`; }
-    chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${model.season.rounds[index][0]}</div>${rows}${touchSelection ? '' : '<div class="f1-tooltip-row"><span>Click</span><strong>Open race</strong></div>'}`;
+    selectedTouchRound = index;
+    chartOpenRound.textContent = `Open ${model.season.rounds[index][0]} race weekend`;
+    chartOpenRound.hidden = false;
+    chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${model.season.rounds[index][0]}</div>${rows}`;
     const box = chart.getBoundingClientRect(); const pixelX = x / 360 * box.width;
     chartTooltip.style.left = `${pixelX}px`; chartTooltip.style.top = '44px'; chartTooltip.style.transform = index < 3 ? 'translateX(0)' : index > n - 4 ? 'translateX(-100%)' : 'translateX(-50%)'; chartTooltip.classList.add('is-visible');
   }
