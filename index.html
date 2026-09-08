@@ -1501,6 +1501,10 @@ html>body{padding:0}</style>
     touch-action: pan-y;
   }
 
+  #f1-compare-wireframe .f1-chart-shell.has-chart-selection .f1-chart-wrap {
+    padding-bottom: 88px;
+  }
+
   #f1-compare-wireframe .f1-chart {
     display: block;
     width: 100%;
@@ -4003,6 +4007,7 @@ html>body{padding:0}</style>
     touchScrubbing = false;
     selectedTouchRound = null;
     chartOpenRound.hidden = true;
+    chartShell.classList.remove('has-chart-selection');
     hideHover();
   }
 
@@ -4027,6 +4032,7 @@ html>body{padding:0}</style>
     else if (activeMode === 'gap') rows = `<div class="f1-tooltip-row"><span>${model.a[1]} − ${model.b[1]}</span><strong>${signed(valueA)} pts</strong></div><div class="f1-tooltip-row"><span>Leader</span><strong>${valueA === 0 ? 'Tied' : `${valueA > 0 ? model.a[0] : model.b[0]} by ${Math.abs(valueA)}`}</strong></div>`;
     else { const gap = valueA - valueB; rows = `<div class="f1-tooltip-row"><span>${model.a[0]}</span><strong>${valueA} pts</strong></div><div class="f1-tooltip-row"><span>${model.b[0]}</span><strong>${valueB} pts</strong></div><div class="f1-tooltip-row"><span>Gap</span><strong>${gap === 0 ? 'Tied' : `${gap > 0 ? model.a[0] : model.b[0]} leads by ${Math.abs(gap)} pts`}</strong></div>`; }
     selectedTouchRound = index;
+    chartShell.classList.add('has-chart-selection');
     chartOpenRound.textContent = `Open ${model.season.rounds[index][0]} race weekend`;
     chartOpenRound.hidden = false;
     chartTooltip.innerHTML = `<div class="f1-tooltip-title">Round ${index + 1} · ${model.season.rounds[index][0]}</div>${rows}`;
@@ -4132,7 +4138,7 @@ html>body{padding:0}</style>
     root.dispatchEvent(new CustomEvent('f1:open-comparison-round', { detail: { season: state.season, roundIndex: selectedTouchRound }, bubbles: true }));
   });
   chartShell.addEventListener('click', event => {
-    if (!touchRoundPinned) return;
+    if (selectedTouchRound === null) return;
     if (event.target.closest('.f1-chart-wrap, .f1-chart-open-round')) return;
     clearChartSelection();
   });
